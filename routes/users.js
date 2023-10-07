@@ -10,6 +10,15 @@ router.get("/me", auth, async (req, res) => {
   res.send(user);
 });
 
+router.get("/", async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+    return res.json(users);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+});
+
 router.post("/", async (req, res) => {
   const { error } = validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
@@ -26,13 +35,13 @@ router.post("/", async (req, res) => {
   res.header("x-auth-token", token).send(_.pick(user, ["_id", "name", "email", "isAdmin"]));
 });
 
-router.delete("/:email", auth, async (req, res) => {
-  const emailToDelete = req.params.email;
+router.delete("/:id", auth, async (req, res) => {
+  const idOfUserToDelete = req.params.id;
 
   try {
-    const deletedUser = await User.findOneAndDelete({ email: emailToDelete });
-
+    const deletedUser = await User.findOneAndDelete({ _id: idOfUserToDelete });
     if (!deletedUser) return res.status(404).json({ message: "User not found" });
+
     return res.json({ message: "User deleted successfully", deletedUser });
   } catch (err) {
     return res.status(500).json({ message: "Internal server error" });
