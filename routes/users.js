@@ -1,7 +1,7 @@
 const auth = require("../middleware/auth");
 const bcrypt = require("bcrypt");
 const _ = require("lodash");
-const { User, validate } = require("../models/user");
+const { User, validate, validateResetPassword } = require("../models/user");
 const express = require("express");
 const router = express.Router();
 
@@ -33,6 +33,26 @@ router.post("/", async (req, res) => {
 
   const token = user.generateAuthToken();
   res.header("x-auth-token", token).send(_.pick(user, ["_id", "name", "email", "isAdmin"]));
+});
+
+router.put("/", async (req, res) => {
+  try {
+    const { error } = validateResetPassword(req.body);
+    if (error) return res.status(400).json({ message: error.details[0].message });
+
+    let user = req.body;
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(user.password, salt);
+
+    const updatedUser = await User.updateOne({ email: req.body.email }, user, {
+      new: true,
+    });
+    if (!updatedUser) return res.status(404).json({ message: "User not found for given email." });
+
+    return res.json(updatedUser);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
 });
 
 router.delete("/:id", auth, async (req, res) => {

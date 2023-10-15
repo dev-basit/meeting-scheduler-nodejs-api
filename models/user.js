@@ -55,5 +55,16 @@ function validateUser(user) {
   return Joi.validate(user, schema);
 }
 
+function validateResetPassword(user) {
+  const schema = {
+    email: Joi.string().min(2).max(255).required().email(),
+    password: Joi.string().min(2).max(255).required(),
+    confirmPassword: Joi.string().min(2).max(255).required(),
+  };
+
+  return Joi.validate(user, schema);
+}
+
 exports.User = User;
 exports.validate = validateUser;
+exports.validateResetPassword = validateResetPassword;
